@@ -142,6 +142,10 @@ enum op_field {
         _(bset, 0, 4, 0, ENC(rs1, rs2, rd))            \
         _(bseti, 0, 4, 0, ENC(rs1, rs2, rd))           \
     )                                                  \
+    /* BNRV Extension */                               \
+    IIF(RV32_HAS(BNRV))(                               \
+        _(bnsum, 0, 4, 0, ENC(rs1, rs2, rd))           \
+    )                                                  \
     /* RV32M Standard Extension */                     \
     IIF(RV32_HAS(EXT_M))(                              \
         _(mul, 0, 4, 1, ENC(rs1, rs2, rd))             \

@@ -85,6 +85,11 @@
 #define RV32_FEATURE_Zbs 1
 #endif
 
+/* BNRV Extension */
+#ifndef RV32_FEATURE_BNRV
+#define RV32_FEATURE_BNRV 1
+#endif
+
 /* Experimental SDL oriented system calls */
 #ifndef RV32_FEATURE_SDL
 #define RV32_FEATURE_SDL 1

@@ -862,6 +862,39 @@ static inline bool op_op(rv_insn_t *ir, const uint32_t insn)
     return true;
 }
 
+#if RV32_HAS(BNRV)
+/* CUSTOM-0: R-type (BNRV Extension)
+ *  31    25 24   20 19   15 14    12 11   7 6      0
+ * | funct7 |  rs2  |  rs1  | funct3 |  rd  | opcode |
+ */
+static inline bool op_custom_0(rv_insn_t *ir, const uint32_t insn)
+{
+    /* inst   funct7  rs2 rs1 funct3 rd opcode
+     * ------+-------+---+---+------+--+-------
+     * BNSUM  0000000 rs2 rs1   001  rd 0001011
+     */
+
+    /* decode R-type */
+    decode_rtype(ir, insn);
+
+    /* check funct7 and funct3 */
+    if (decode_funct7(insn) != 0b0000000)
+        return false;
+
+    /* dispatch from funct3 field */
+    switch (decode_funct3(insn)) {
+    case 0b001: /* BNSUM */
+        ir->opcode = rv_insn_bnsum;
+        break;
+    default: /* illegal instruction */
+        return false;
+    }
+    return true;
+}
+#else
+#define op_custom_0 OP_UNIMP
+#endif /* RV32_HAS(BNRV) */
+
 /* LUI: U-type
  *  31        12 11   7 6      0
  * | imm[31:12] |  rd  | opcode |
@@ -1986,11 +2019,11 @@ bool rv_decode(rv_insn_t *ir, uint32_t insn)
     /* RV32 base opcode map */
     /* clang-format off */
     static const decode_t rv_jump_table[] = {
-    //  000         001           010        011           100         101        110        111
-        OP(load),   OP(load_fp),  OP(unimp), OP(misc_mem), OP(op_imm), OP(auipc), OP(unimp), OP(unimp), // 00
-        OP(store),  OP(store_fp), OP(unimp), OP(amo),      OP(op),     OP(lui),   OP(unimp), OP(unimp), // 01
-        OP(madd),   OP(msub),     OP(nmsub), OP(nmadd),    OP(op_fp),  OP(unimp), OP(unimp), OP(unimp), // 10
-        OP(branch), OP(jalr),     OP(unimp), OP(jal),      OP(system), OP(unimp), OP(unimp), OP(unimp), // 11
+    //  000         001           010           011           100         101        110        111
+        OP(load),   OP(load_fp),  OP(custom_0), OP(misc_mem), OP(op_imm), OP(auipc), OP(unimp), OP(unimp), // 00
+        OP(store),  OP(store_fp), OP(unimp), OP(amo),      OP(op),     OP(lui),   OP(unimp), OP(unimp),    // 01
+        OP(madd),   OP(msub),     OP(nmsub), OP(nmadd),    OP(op_fp),  OP(unimp), OP(unimp), OP(unimp),    // 10
+        OP(branch), OP(jalr),     OP(unimp), OP(jal),      OP(system), OP(unimp), OP(unimp), OP(unimp),    // 11
     };
 
 #if RV32_HAS(EXT_C)

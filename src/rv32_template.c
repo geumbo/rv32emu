@@ -519,6 +519,50 @@ RVOP(
      { rv->X[ir->rd] = rv->X[ir->rs1] & rv->X[ir->rs2]; })
 /* clang-format on */
 
+#if RV32_HAS(BNRV)
+/* BNSUM: BitNet Sum (4-element dot product with ternary weights)
+ * Computes: rd = sum(activation[i] * weight[i]) for i=0..3
+ * - rs1 contains 4 packed int8 activations: [a3|a2|a1|a0] (bits
+ * 31:24|23:16|15:8|7:0)
+ * - rs2 contains 4 packed 2-bit ternary weights: [w3|w2|w1|w0] (bits
+ * 7:6|5:4|3:2|1:0)
+ * - Weight encoding (1.58-bit): 01 = +1, 11 = -1, 00/10 = 0
+ */
+RVOP(
+    bnsum,
+    {
+        /* Extract packed activations from rs1 */
+        uint32_t act_packed = rv->X[ir->rs1];
+
+        /* Extract packed weights from rs2 (lower 8 bits) */
+        uint32_t weight_packed = rv->X[ir->rs2] & 0xFF;
+
+        /* Compute 4-element dot product with ternary weights */
+        int32_t result = 0;
+        for (int i = 0; i < 4; i++) {
+            /* Extract activation (int8) */
+            int8_t a = (int8_t) ((act_packed >> (i * 8)) & 0xFF);
+
+            /* Extract weight (2 bits) */
+            uint8_t w = (weight_packed >> (i * 2)) & 0x03;
+
+            /* Ternary weight logic: 01=+1, 11=-1, 00/10=0 */
+            if (w == 0x01) /* +1 */
+                result += a;
+            else if (w == 0x03) /* -1 (binary 11) */
+                result -= a;
+            /* else: w == 0x00 or 0x02, multiply by 0, skip */
+        }
+
+        /* Write result to rd */
+        rv->X[ir->rd] = (uint32_t) result;
+    },
+    GEN({
+        /* JIT not implemented */
+        assert;
+    }))
+#endif /* RV32_HAS(BNRV) */
+
 /*
  * FENCE: order device I/O and memory accesses as viewed by other
  * RISC-V harts and external devices or coprocessors
