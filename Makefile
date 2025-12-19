@@ -195,6 +195,10 @@ $(call set-feature, Zbc)
 ENABLE_Zbs ?= 1
 $(call set-feature, Zbs)
 
+# BNRV Extension
+ENABLE_BNRV ?= 1
+$(call set-feature, BNRV)
+
 ENABLE_FULL4G ?= 0
 
 # Experimental SDL oriented system calls
