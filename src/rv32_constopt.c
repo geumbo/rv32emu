@@ -356,6 +356,14 @@ CONSTOPT(and, {
         info->is_constant[ir->rd] = false;
 })
 
+#if RV32_HAS(BNRV)
+/* BNSUM */
+CONSTOPT(bnsum, {
+    if (ir->rd)
+        info->is_constant[ir->rd] = false;
+})
+#endif
+
 /*
  * FENCE: order device I/O and memory accesses as viewed by other
  * RISC-V harts and external devices or coprocessors
