@@ -90,6 +90,11 @@
 #define RV32_FEATURE_BNRV 1
 #endif
 
+/* BNRV SIMD Acceleration */
+#ifndef RV32_FEATURE_BNRV_SIMD
+#define RV32_FEATURE_BNRV_SIMD 1
+#endif
+
 /* Experimental SDL oriented system calls */
 #ifndef RV32_FEATURE_SDL
 #define RV32_FEATURE_SDL 1
