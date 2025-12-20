@@ -199,6 +199,31 @@ $(call set-feature, Zbs)
 ENABLE_BNRV ?= 1
 $(call set-feature, BNRV)
 
+# BNRV SIMD Acceleration
+ENABLE_BNRV_SIMD ?= 1
+$(call set-feature, BNRV_SIMD)
+
+# Auto-detect SIMD capability based on host processor
+# processor variable is set in mk/toolchain.mk via: $(shell uname -m)
+ifeq ($(call has, BNRV_SIMD), 1)
+    # x86/x86_64: Enable SSSE3
+    ifeq ($(processor),$(filter $(processor),i386 x86_64))
+        CFLAGS_SIMD := -mssse3
+    endif
+    # ARM64/AArch64: NEON is enabled by default, no extra flags needed
+    ifeq ($(processor),$(filter $(processor),aarch64 arm64))
+        CFLAGS_SIMD :=
+    endif
+    # If processor not recognized, CFLAGS_SIMD stays empty
+    # -> __SSSE3__ and __ARM_NEON won't be defined
+    # -> Falls back to scalar LUT in rv32_template.c
+endif
+
+# Apply SIMD flags to emulate.o (which includes rv32_template.c)
+ifdef CFLAGS_SIMD
+$(OUT)/emulate.o: CFLAGS += $(CFLAGS_SIMD)
+endif
+
 ENABLE_FULL4G ?= 0
 
 # Experimental SDL oriented system calls
