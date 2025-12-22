@@ -362,6 +362,9 @@ CONSTOPT(bnsum, {
     if (ir->rd)
         info->is_constant[ir->rd] = false;
 })
+
+/* BNSTORE */
+CONSTOPT(bnstore, {})
 #endif
 
 /*

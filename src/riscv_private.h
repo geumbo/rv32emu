@@ -295,6 +295,12 @@ struct riscv_internal {
     tlb_entry_t itlb[TLB_SIZE];
 #endif
 
+#if RV32_HAS(BNRV)
+    /* BNRV internal buffer */
+    uint64_t bnrv_buffer; /* 64-bit buffer */
+    uint8_t bnrv_offset;  /* current offset */
+#endif
+
 #if RV32_HAS(ARCH_TEST)
     /* RISC-V architectural test support: tohost/fromhost addresses */
     uint32_t tohost_addr;
