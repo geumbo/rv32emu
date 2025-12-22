@@ -886,6 +886,9 @@ static inline bool op_custom_0(rv_insn_t *ir, const uint32_t insn)
     case 0b001: /* BNSUM */
         ir->opcode = rv_insn_bnsum;
         break;
+    case 0b010: /* BNSTORE */
+        ir->opcode = rv_insn_bnstore;
+        break;
     default: /* illegal instruction */
         return false;
     }

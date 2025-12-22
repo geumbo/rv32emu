@@ -662,7 +662,7 @@ static const int8_t bitnet_lut[256][4] = {
 };
 /* clang-format on */
 
-/* compute 4-element dot product with ternary weights */
+/* Scalar fallback for SIMD=4 */
 static inline int32_t bitnetadd4(uint32_t activations, uint32_t weights)
 {
     const int8_t *c = bitnet_lut[weights & 0xFF];
@@ -671,12 +671,63 @@ static inline int32_t bitnetadd4(uint32_t activations, uint32_t weights)
            ((int8_t) (activations >> 16)) * c[2] +
            ((int8_t) (activations >> 24)) * c[3];
 }
+
+/* Scalar fallback for SIMD=8 */
+static inline int32_t bitnetadd8(uint32_t act_lo,
+                                 uint32_t act_hi,
+                                 uint64_t buffer,
+                                 uint8_t offset)
+{
+    static const int8_t coeff_map[4] = {0, 1, 0, -1};
+    uint16_t w = (uint16_t) ((buffer >> offset) & 0xFFFF);
+    return ((int8_t) (act_lo >> 0)) * coeff_map[(w >> 0) & 0x03] +
+           ((int8_t) (act_lo >> 8)) * coeff_map[(w >> 2) & 0x03] +
+           ((int8_t) (act_lo >> 16)) * coeff_map[(w >> 4) & 0x03] +
+           ((int8_t) (act_lo >> 24)) * coeff_map[(w >> 6) & 0x03] +
+           ((int8_t) (act_hi >> 0)) * coeff_map[(w >> 8) & 0x03] +
+           ((int8_t) (act_hi >> 8)) * coeff_map[(w >> 10) & 0x03] +
+           ((int8_t) (act_hi >> 16)) * coeff_map[(w >> 12) & 0x03] +
+           ((int8_t) (act_hi >> 24)) * coeff_map[(w >> 14) & 0x03];
+}
 #endif /* RV32_HAS(BNRV_SIMD) */
 
-/* BNSUM: BitNet Sum (4-element) */
+/* BNSUM: BitNet Sum - Use SIMD Acceleration if possible */
 RVOP(
     bnsum,
-    { rv->X[ir->rd] = (uint32_t) bitnetadd4(rv->X[ir->rs1], rv->X[ir->rs2]); },
+    {
+        int32_t result;
+        /* Check offset only - allows buffer=0 (all-zero weights are valid).
+         * Branch with likely hint - optimized for SIMD=8+ loop scenarios.
+         */
+        if (likely(rv->bnrv_offset < 64)) {
+            /* SIMD=8 mode: weights are in buffer */
+            result = bitnetadd8(rv->X[ir->rs1], rv->X[ir->rs2], rv->bnrv_buffer,
+                                rv->bnrv_offset);
+
+            /* Auto-increment buffer offset by 16 bits */
+            rv->bnrv_offset += 16;
+        } else {
+            /* SIMD=4 fallback: Process 4 elements with immediate weights
+             * NOTE: This occurs when buffer exhausted OR no BNSTORE called
+             * WARNING: rs2 semantics switch from activation_high to weights
+             */
+            result = bitnetadd4(rv->X[ir->rs1], rv->X[ir->rs2]);
+        }
+        rv->X[ir->rd] = (uint32_t) result;
+    },
+    GEN({
+        /* JIT not implemented */
+        assert;
+    }))
+
+/* BNSTORE: Load 64-bit weight buffer (rs1##rs2) for SIMD=8+ modes */
+RVOP(
+    bnstore,
+    {
+        rv->bnrv_buffer =
+            ((uint64_t) rv->X[ir->rs1]) << 32 | (uint64_t) rv->X[ir->rs2];
+        rv->bnrv_offset = 0;
+    },
     GEN({
         /* JIT not implemented */
         assert;

@@ -331,6 +331,12 @@ struct riscv_internal {
     uint64_t timer_offset;
 #endif
 
+#if RV32_HAS(BNRV)
+    /* BNRV internal buffer */
+    uint64_t bnrv_buffer; /* 64-bit buffer */
+    uint8_t bnrv_offset;  /* current offset */
+#endif
+
 #if RV32_HAS(ARCH_TEST)
     /* RISC-V architectural test support: tohost/fromhost addresses */
     uint32_t tohost_addr;

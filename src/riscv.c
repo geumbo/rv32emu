@@ -597,6 +597,11 @@ riscv_t *rv_create(riscv_user_t rv_attr)
     atexit(rv_fsync_device);
 #endif
 
+#if RV32_HAS(BNRV)
+    rv->bnrv_buffer = 0;
+    rv->bnrv_offset = 64; /* Initialize to invalid offset -> SIMD=4 mode */
+#endif
+
     /* copy over the attr */
     rv->data = rv_attr;
 
