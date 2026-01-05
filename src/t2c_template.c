@@ -1680,3 +1680,8 @@ T2C_OP(fuse12, {
     }
     LLVMBuildCondBr(*builder, cmp, taken, untaken);
 })
+
+#if RV32_HAS(BNRV)
+T2C_OP(bnsum, { __UNREACHABLE; })
+T2C_OP(bnstore, { __UNREACHABLE; })
+#endif

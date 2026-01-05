@@ -33,6 +33,7 @@ $(info   make jit_defconfig    - Enable JIT compilation)
 $(info   make mini_defconfig   - Minimal build for embedded use)
 $(info   make system_defconfig - System emulation mode)
 $(info   make wasm_defconfig   - WebAssembly build)
+$(info   make bnrv_defconfig   - Enable BNRV extensions)
 $(info )
 $(error .config required. Run 'make defconfig' first.)
 endif
@@ -181,6 +182,33 @@ $(OUT)/t2c.o: src/t2c.c src/t2c_template.c $(CONFIG_HEADER)
 	$(Q)$(CC) -o $@ $(CFLAGS) -DCONFIG_T2C_OPT_LEVEL=$(T2C_OPT_LEVEL) -c -MMD -MF $@.d $<
 else
     CFLAGS += -DRV32_FEATURE_T2C=0
+endif
+
+# BNRV Extensions
+$(call set-feature, BNRV)
+
+# BNRV SIMD Acceleration
+$(call set-feature, BNRV_SIMD)
+
+# Auto-detect SIMD capability based on host processor
+# UNAME_M variable is set in mk/toolchain.mk via: $(shell uname -m)
+ifeq ($(CONFIG_BNRV_SIMD),y)
+    # x86/x86_64: Enable SSSE3
+    ifeq ($(UNAME_M),$(filter $(UNAME_M),i386 x86_64))
+        CFLAGS_SIMD := -mssse3
+    endif
+    # ARM64/AArch64: NEON is enabled by default, no extra flags needed
+    ifeq ($(UNAME_M),$(filter $(UNAME_M),aarch64 arm64))
+        CFLAGS_SIMD :=
+    endif
+    # If processor not recognized, CFLAGS_SIMD stays empty
+    # -> __SSSE3__ and __ARM_NEON won't be defined
+    # -> Falls back to scalar LUT in rv32_template.c
+endif
+
+# Apply SIMD flags to emulate.o (which includes rv32_template.c)
+ifdef CFLAGS_SIMD
+$(OUT)/emulate.o: CFLAGS += $(CFLAGS_SIMD)
 endif
 
 # Tail-call optimization
