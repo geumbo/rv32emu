@@ -953,7 +953,7 @@ void generate(Transformer *transformer,
     }
 
     // start the main loop
-    long start =
+    uint64_t start =
         0;     // used to time our code, only initialized after first iteration
     int next;  // will store the next token in the sequence
     int token =

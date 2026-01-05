@@ -1091,3 +1091,7 @@ GEN(binvi, { assert(NULL); })
 GEN(bset, { assert(NULL); })
 GEN(bseti, { assert(NULL); })
 #endif
+#if RV32_HAS(BNRV)
+GEN(bnsum, { assert(NULL); })
+GEN(bnstore, { assert(NULL); })
+#endif

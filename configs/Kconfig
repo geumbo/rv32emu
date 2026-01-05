@@ -189,6 +189,23 @@ config Zbs
       Enable single-bit manipulation instructions.
       Provides efficient bit test, set, clear operations.
 
+comment "BNRV Extensions"
+
+config BNRV
+    bool "BNRV - BitNet RISC-V Extension"
+    default n
+    help
+      Enable BitNet RISC-V custom instructions (BNSUM, BNSTORE).
+      Accelerates ternary weight neural network inference.
+
+config BNRV_SIMD
+    bool "BNRV SIMD Acceleration"
+    default n
+    depends on BNRV
+    help
+      Enable SIMD acceleration for BNRV instructions.
+      Uses host SIMD (SSSE3/NEON) for bitnetadd operations.
+
 endmenu
 
 # Execution Modes
