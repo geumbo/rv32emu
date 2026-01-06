@@ -13,8 +13,10 @@ SECTIONS
   .data : { *(.data) }
 
   .bss : {
-    __bss_start = .;
-    *(.bss)
+   __bss_start = .;
+    *(.sbss*)
+    *(.bss .bss.*)
+    *(COMMON)
     __bss_end = .;
   }
 
