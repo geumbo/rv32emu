@@ -734,6 +734,39 @@ RVOP(
     }))
 #endif /* RV32_HAS(BNRV) */
 
+#if RV32_HAS(FDOT)
+/* FDOT4: FP32 Dot Product of 4 elements */
+RVOP(
+    fdot4,
+    {
+        const uint32_t addr1 = rv->X[ir->rs1];
+        const uint32_t addr2 = rv->X[ir->rs2];
+        union {
+            uint32_t u;
+            float f;
+        } buf[8];
+        buf[0].u = MEM_READ_W(rv, addr1);
+        buf[1].u = MEM_READ_W(rv, addr1 + 4);
+        buf[2].u = MEM_READ_W(rv, addr1 + 8);
+        buf[3].u = MEM_READ_W(rv, addr1 + 12);
+        buf[4].u = MEM_READ_W(rv, addr2);
+        buf[5].u = MEM_READ_W(rv, addr2 + 4);
+        buf[6].u = MEM_READ_W(rv, addr2 + 8);
+        buf[7].u = MEM_READ_W(rv, addr2 + 12);
+        float result = buf[0].f * buf[4].f + buf[1].f * buf[5].f +
+                       buf[2].f * buf[6].f + buf[3].f * buf[7].f;
+        /* accumulate into F[rd] */
+        union {
+            uint32_t u;
+            float f;
+        } acc;
+        acc.u = rv->F[ir->rd].v;
+        acc.f += result;
+        rv->F[ir->rd].v = acc.u;
+    },
+    GEN({ assert; }))
+#endif /* RV32_HAS(FDOT) */
+
 /*
  * FENCE: order device I/O and memory accesses as viewed by other
  * RISC-V harts and external devices or coprocessors

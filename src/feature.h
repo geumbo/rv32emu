@@ -95,6 +95,11 @@
 #define RV32_FEATURE_BNRV_SIMD 1
 #endif
 
+/* FDOT Extension (FP32 Dot Product for Attention acceleration) */
+#ifndef RV32_FEATURE_FDOT
+#define RV32_FEATURE_FDOT 1
+#endif
+
 /* Experimental SDL oriented system calls */
 #ifndef RV32_FEATURE_SDL
 #define RV32_FEATURE_SDL 1

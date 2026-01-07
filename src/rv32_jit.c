@@ -790,3 +790,6 @@ GEN(bseti, { assert(NULL); })
 GEN(bnsum, { assert(NULL); })
 GEN(bnstore, { assert(NULL); })
 #endif
+#if RV32_HAS(FDOT)
+GEN(fdot4, { assert(NULL); })
+#endif

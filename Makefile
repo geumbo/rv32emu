@@ -184,11 +184,14 @@ else
     CFLAGS += -DRV32_FEATURE_T2C=0
 endif
 
-# BNRV Extensions
+# BNRV Extension
 $(call set-feature, BNRV)
 
 # BNRV SIMD Acceleration
 $(call set-feature, BNRV_SIMD)
+
+# FDOT Extension (FP32 Dot Product)
+$(call set-feature, FDOT)
 
 # Auto-detect SIMD capability based on host processor
 # UNAME_M variable is set in mk/toolchain.mk via: $(shell uname -m)

@@ -1685,3 +1685,7 @@ T2C_OP(fuse12, {
 T2C_OP(bnsum, { __UNREACHABLE; })
 T2C_OP(bnstore, { __UNREACHABLE; })
 #endif
+
+#if RV32_HAS(FDOT)
+T2C_OP(fdot4, { __UNREACHABLE; })
+#endif

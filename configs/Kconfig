@@ -189,7 +189,7 @@ config Zbs
       Enable single-bit manipulation instructions.
       Provides efficient bit test, set, clear operations.
 
-comment "BNRV Extensions"
+comment "BNRV Extension"
 
 config BNRV
     bool "BNRV - BitNet RISC-V Extension"
@@ -205,6 +205,13 @@ config BNRV_SIMD
     help
       Enable SIMD acceleration for BNRV instructions.
       Uses host SIMD (SSSE3/NEON) for bitnetadd operations.
+
+config FDOT
+    bool "FDOT - FP32 Dot Product Extension"
+    default n
+    help
+      Enable FP32 dot product custom instruction (fdot4).
+      Accelerates Attention score computation in neural networks.
 
 endmenu
 

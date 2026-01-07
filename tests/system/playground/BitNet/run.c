@@ -409,9 +409,15 @@ float *forward(Transformer *transformer, int token, int pos)
                     s->key_cache + loff + t * kv_dim + (h / kv_mul) * head_size;
                 // calculate the attention score as the dot product of q and k
                 float score = 0.0f;
-                for (int i = 0; i < head_size; i++) {
-                    score += q[i] * k[i];
-                }
+                /* Direct 8x unroll (no loop) for head_size=32 */
+                score = fdot4_acc(score, &q[0], &k[0]);
+                score = fdot4_acc(score, &q[4], &k[4]);
+                score = fdot4_acc(score, &q[8], &k[8]);
+                score = fdot4_acc(score, &q[12], &k[12]);
+                score = fdot4_acc(score, &q[16], &k[16]);
+                score = fdot4_acc(score, &q[20], &k[20]);
+                score = fdot4_acc(score, &q[24], &k[24]);
+                score = fdot4_acc(score, &q[28], &k[28]);
                 score /= sqrtf(head_size);
                 // save the score to the attention buffer
                 att[t] = score;

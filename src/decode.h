@@ -147,6 +147,10 @@ enum op_field {
         _(bnsum, 0, 4, 0, ENC(rs1, rs2, rd))           \
         _(bnstore, 0, 4, 0, ENC(rs1, rs2, rd))         \
     )                                                  \
+    /* FDOT Extension (FP32 Dot Product) */            \
+    IIF(RV32_HAS(FDOT))(                               \
+        _(fdot4, 0, 4, 0, ENC(rs1, rs2, rd))           \
+    )                                                  \
     /* RV32M Standard Extension */                     \
     IIF(RV32_HAS(EXT_M))(                              \
         _(mul, 0, 4, 1, ENC(rs1, rs2, rd))             \

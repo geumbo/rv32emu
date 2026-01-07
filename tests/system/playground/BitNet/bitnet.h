@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "bnrv.h"
+#include "fdot.h"
 #include "sim_stdlib.h"
 
 // Profiler Variables
