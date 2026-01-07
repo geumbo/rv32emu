@@ -367,6 +367,11 @@ CONSTOPT(bnsum, {
 CONSTOPT(bnstore, {})
 #endif
 
+#if RV32_HAS(FDOT)
+/* FDOT4: FP32 Dot Product - no integer register optimization */
+CONSTOPT(fdot4, {})
+#endif
+
 /*
  * FENCE: order device I/O and memory accesses as viewed by other
  * RISC-V harts and external devices or coprocessors
