@@ -297,8 +297,26 @@ void fmatmul(float *xout, float *x, float *w, int n, int d)
     uint64_t start = get_cycles();
     for (int i = 0; i < d; i++) {
         float val = 0.0f;
-        for (int j = 0; j < n; j++) {
-            val += w[i * n + j] * x[j];
+        float *wi = &w[i * n];
+        int j = 0;
+        /* fdot4 unrolled 8x (32 elements per iteration) */
+        for (; j <= n - 32; j += 32) {
+            val = fdot4_acc(val, &wi[j], &x[j]);
+            val = fdot4_acc(val, &wi[j + 4], &x[j + 4]);
+            val = fdot4_acc(val, &wi[j + 8], &x[j + 8]);
+            val = fdot4_acc(val, &wi[j + 12], &x[j + 12]);
+            val = fdot4_acc(val, &wi[j + 16], &x[j + 16]);
+            val = fdot4_acc(val, &wi[j + 20], &x[j + 20]);
+            val = fdot4_acc(val, &wi[j + 24], &x[j + 24]);
+            val = fdot4_acc(val, &wi[j + 28], &x[j + 28]);
+        }
+        /* handle remaining blocks of 4 */
+        for (; j <= n - 4; j += 4) {
+            val = fdot4_acc(val, &wi[j], &x[j]);
+        }
+        /* remaining scalar */
+        for (; j < n; j++) {
+            val += wi[j] * x[j];
         }
         xout[i] = val;
     }
