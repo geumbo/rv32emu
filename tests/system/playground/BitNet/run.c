@@ -78,6 +78,7 @@ typedef struct {
     // kv cache
     float *key_cache;    // (layer, seq_len, dim)
     float *value_cache;  // (layer, seq_len, dim)
+    float *rope_freq;    // precomputed RoPE frequencies (head_size/2,)
 } RunState;
 
 typedef struct {
@@ -91,6 +92,7 @@ void malloc_run_state(RunState *s, Config *p)
 {
     // we calloc instead of malloc to keep valgrind happy
     int kv_dim = (p->dim * p->n_kv_heads) / p->n_heads;
+    int head_size = p->dim / p->n_heads;
     s->x = calloc(p->dim, sizeof(float));
     s->xb = calloc(p->dim, sizeof(float));
     s->xb2 = calloc(p->dim, sizeof(float));
@@ -101,9 +103,15 @@ void malloc_run_state(RunState *s, Config *p)
     s->value_cache = calloc(p->n_layers * p->seq_len * kv_dim, sizeof(float));
     s->att = calloc(p->n_heads * p->seq_len, sizeof(float));
     s->logits = calloc(p->vocab_size, sizeof(float));
+    /* precompute RoPE frequencies: freq[i] = 1 / 10000^(2i/head_size) */
+    s->rope_freq = calloc(head_size / 2, sizeof(float));
+    for (int i = 0; i < head_size / 2; i++) {
+        s->rope_freq[i] = 1.0f / powf(10000.0f, (2 * i) / (float) head_size);
+    }
     // ensure all mallocs went fine
     if (!s->x || !s->xb || !s->xb2 || !s->hb || !s->hb2 || !s->q ||
-        !s->key_cache || !s->value_cache || !s->att || !s->logits) {
+        !s->key_cache || !s->value_cache || !s->att || !s->logits ||
+        !s->rope_freq) {
         printf("malloc failed!\n");
         exit(EXIT_FAILURE);
     }
@@ -121,6 +129,7 @@ void free_run_state(RunState *s)
     free(s->logits);
     free(s->key_cache);
     free(s->value_cache);
+    free(s->rope_freq);
 }
 
 size_t init_bitnet_weight(BitNetWeight *w,
@@ -391,11 +400,11 @@ float *forward(Transformer *transformer, int token, int pos)
 
         start = get_cycles();
         // RoPE relative positional encoding: complex-valued rotate q and k in
-        // each head
+        // each head (using precomputed frequency table)
         for (int i = 0; i < dim; i += 2) {
             int head_dim = i % head_size;
-            float freq = 1.0f / powf(10000.0f, head_dim / (float) head_size);
-            float val = pos * freq;
+            float val =
+                pos * s->rope_freq[head_dim / 2];  // lookup instead of powf
             float fcr = cosf(val);
             float fci = sinf(val);
             int rotn =
